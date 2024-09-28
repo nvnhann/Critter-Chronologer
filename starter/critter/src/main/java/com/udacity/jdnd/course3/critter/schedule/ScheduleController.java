@@ -1,8 +1,16 @@
 package com.udacity.jdnd.course3.critter.schedule;
 
+import com.udacity.jdnd.course3.critter.entity.Employee;
+import com.udacity.jdnd.course3.critter.entity.Pet;
+import com.udacity.jdnd.course3.critter.entity.Schedule;
+import com.udacity.jdnd.course3.critter.service.ScheduleService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Handles web requests related to Schedules.
@@ -11,28 +19,99 @@ import java.util.List;
 @RequestMapping("/schedule")
 public class ScheduleController {
 
+    @Autowired
+    ScheduleService scheduleService;
+
+    /**
+     * Converts a Schedule entity to a ScheduleDTO.
+     *
+     * @param schedule the Schedule entity to convert
+     * @return the converted ScheduleDTO
+     */
+    private ScheduleDTO convertScheduleToScheduleDTO(Schedule schedule) {
+        List<Long> employeeIds = schedule.getEmployees().stream().map(Employee::getId).collect(Collectors.toList());
+        List<Long> petIds = schedule.getPets().stream().map(Pet::getId).collect(Collectors.toList());
+        return new ScheduleDTO(schedule.getId(), employeeIds, petIds, schedule.getDate(), schedule.getActivities());
+    }
+
+    /**
+     * Creates and saves a new schedule.
+     *
+     * @param scheduleDTO the DTO containing schedule details
+     * @return the saved ScheduleDTO
+     */
     @PostMapping
     public ScheduleDTO createSchedule(@RequestBody ScheduleDTO scheduleDTO) {
-        throw new UnsupportedOperationException();
+        Schedule schedule = new Schedule(scheduleDTO.getDate(), scheduleDTO.getActivities());
+        try {
+            schedule = scheduleService.saveSchedule(schedule, scheduleDTO.getEmployeeIds(), scheduleDTO.getPetIds());
+        } catch (Exception exception) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Schedule could not be saved", exception);
+        }
+        return convertScheduleToScheduleDTO(schedule);
     }
 
+    /**
+     * Retrieves all schedules.
+     *
+     * @return list of all ScheduleDTOs
+     */
     @GetMapping
     public List<ScheduleDTO> getAllSchedules() {
-        throw new UnsupportedOperationException();
+        return scheduleService.getAllSchedules()
+                .stream()
+                .map(this::convertScheduleToScheduleDTO)
+                .collect(Collectors.toList());
     }
 
+    /**
+     * Retrieves schedules for a specific pet.
+     *
+     * @param petId the ID of the pet
+     * @return list of ScheduleDTOs for the pet
+     */
     @GetMapping("/pet/{petId}")
     public List<ScheduleDTO> getScheduleForPet(@PathVariable long petId) {
-        throw new UnsupportedOperationException();
+        List<Schedule> schedules;
+        try {
+            schedules = scheduleService.getPetSchedule(petId);
+        } catch (Exception exception) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Pet schedule with id: " + petId + " not found", exception);
+        }
+        return schedules.stream().map(this::convertScheduleToScheduleDTO).collect(Collectors.toList());
     }
 
+    /**
+     * Retrieves schedules for a specific employee.
+     *
+     * @param employeeId the ID of the employee
+     * @return list of ScheduleDTOs for the employee
+     */
     @GetMapping("/employee/{employeeId}")
     public List<ScheduleDTO> getScheduleForEmployee(@PathVariable long employeeId) {
-        throw new UnsupportedOperationException();
+        List<Schedule> schedules;
+        try {
+            schedules = scheduleService.getEmployeeSchedule(employeeId);
+        } catch (Exception exception) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Employee schedule with employee id: " + employeeId + " not found", exception);
+        }
+        return schedules.stream().map(this::convertScheduleToScheduleDTO).collect(Collectors.toList());
     }
 
+    /**
+     * Retrieves schedules for a specific customer.
+     *
+     * @param customerId the ID of the customer
+     * @return list of ScheduleDTOs for the customer
+     */
     @GetMapping("/customer/{customerId}")
     public List<ScheduleDTO> getScheduleForCustomer(@PathVariable long customerId) {
-        throw new UnsupportedOperationException();
+        List<Schedule> schedules;
+        try {
+            schedules = scheduleService.getCustomerSchedule(customerId);
+        } catch (Exception exception) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Schedule with owner id " + customerId + " not found", exception);
+        }
+        return schedules.stream().map(this::convertScheduleToScheduleDTO).collect(Collectors.toList());
     }
 }

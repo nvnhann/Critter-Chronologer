@@ -14,6 +14,31 @@ public class PetDTO {
     private LocalDate birthDate;
     private String notes;
 
+    /**
+     * Constructs a new PetDTO with the specified details.
+     *
+     * @param id        the unique ID of the pet
+     * @param type      the type of the pet
+     * @param name      the name of the pet
+     * @param ownerId   the ID of the owner
+     * @param birthDate the birth date of the pet
+     * @param notes     additional notes about the pet
+     */
+    public PetDTO(long id, PetType type, String name, long ownerId, LocalDate birthDate, String notes) {
+        this.id = id;
+        this.type = type;
+        this.name = name;
+        this.ownerId = ownerId;
+        this.birthDate = birthDate;
+        this.notes = notes;
+    }
+
+    /**
+     * Default constructor.
+     */
+    public PetDTO() {
+    }
+
     public PetType getType() {
         return type;
     }
