@@ -34,17 +34,9 @@ public class ScheduleService {
      * Saves a new schedule with the specified employees and pets.
      *
      * @param schedule    the schedule to save
-     * @param employeeIds the IDs of the employees
-     * @param petIds      the IDs of the pets
      * @return the saved schedule
      */
-    public Schedule saveSchedule(Schedule schedule, List<Long> employeeIds, List<Long> petIds) {
-        List<Pet> pets = petRepository.findAllById(petIds);
-        List<Employee> employees = employeeRepository.findAllById(employeeIds);
-
-        schedule.setPets(pets);
-        schedule.setEmployees(employees);
-
+    public Schedule saveSchedule(Schedule schedule) {
         return scheduleRepository.save(schedule);
     }
 

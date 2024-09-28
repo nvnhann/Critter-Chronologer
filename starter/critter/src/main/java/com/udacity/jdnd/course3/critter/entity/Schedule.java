@@ -118,4 +118,24 @@ public class Schedule {
     public Set<EmployeeSkill> getActivities() {
         return activities;
     }
+
+
+    /**
+     * Sets the date of the schedule.
+     *
+     * @param date the schedule date
+     */
+    public void setDate(LocalDate date) {
+        this.date = date;
+    }
+
+    /**
+     * Sets the set of scheduled activities.
+     *
+     * @param activities the set of scheduled activities
+     */
+    public void setSkills(Set<EmployeeSkill> activities) {
+        this.activities = activities;
+    }
+
 }

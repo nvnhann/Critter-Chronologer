@@ -3,7 +3,10 @@ package com.udacity.jdnd.course3.critter.schedule;
 import com.udacity.jdnd.course3.critter.entity.Employee;
 import com.udacity.jdnd.course3.critter.entity.Pet;
 import com.udacity.jdnd.course3.critter.entity.Schedule;
+import com.udacity.jdnd.course3.critter.repository.EmployeeRepository;
+import com.udacity.jdnd.course3.critter.repository.PetRepository;
 import com.udacity.jdnd.course3.critter.service.ScheduleService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +24,10 @@ public class ScheduleController {
 
     @Autowired
     ScheduleService scheduleService;
+    @Autowired
+    private EmployeeRepository employeeRepository;
+    @Autowired
+    private PetRepository petRepository;
 
     /**
      * Converts a Schedule entity to a ScheduleDTO.
@@ -42,13 +49,34 @@ public class ScheduleController {
      */
     @PostMapping
     public ScheduleDTO createSchedule(@RequestBody ScheduleDTO scheduleDTO) {
-        Schedule schedule = new Schedule(scheduleDTO.getDate(), scheduleDTO.getActivities());
-        try {
-            schedule = scheduleService.saveSchedule(schedule, scheduleDTO.getEmployeeIds(), scheduleDTO.getPetIds());
-        } catch (Exception exception) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Schedule could not be saved", exception);
-        }
-        return convertScheduleToScheduleDTO(schedule);
+        Schedule schedule = convertDTOToSchedule(scheduleDTO);
+
+        Schedule savedSchedule = scheduleService.saveSchedule(schedule);
+
+        return convertScheduleToDTO(savedSchedule);
+
+    }
+
+    public ScheduleDTO convertScheduleToDTO(Schedule schedule){
+        ScheduleDTO scheduleDTO = new ScheduleDTO();
+        BeanUtils.copyProperties(schedule, scheduleDTO);
+
+        List<Long> listOfEmployeeIDs = schedule.getEmployees()
+                .stream()
+                .map(Employee::getId)
+                .collect(Collectors.toList());
+
+        List<Long> listOfPetIDs = schedule.getPets()
+                .stream()
+                .map(Pet::getId)
+                .collect(Collectors.toList());
+
+        scheduleDTO.setDate(schedule.getDate());
+        scheduleDTO.setActivities(schedule.getActivities());
+        scheduleDTO.setEmployeeIds(listOfEmployeeIDs);
+        scheduleDTO.setPetIds(listOfPetIDs);
+
+        return scheduleDTO;
     }
 
     /**
@@ -113,5 +141,18 @@ public class ScheduleController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Schedule with owner id " + customerId + " not found", exception);
         }
         return schedules.stream().map(this::convertScheduleToScheduleDTO).collect(Collectors.toList());
+    }
+
+    public Schedule convertDTOToSchedule(ScheduleDTO scheduleDTO){
+        Schedule schedule = new Schedule();
+
+        BeanUtils.copyProperties(scheduleDTO, schedule);
+
+        schedule.setDate(scheduleDTO.getDate());
+        schedule.setSkills(scheduleDTO.getActivities());
+        schedule.setEmployees(employeeRepository.findAllById(scheduleDTO.getEmployeeIds()));
+        schedule.setPets(petRepository.findAllById(scheduleDTO.getPetIds()));
+
+        return schedule;
     }
 }
